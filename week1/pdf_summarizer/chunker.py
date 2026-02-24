@@ -1,10 +1,10 @@
 import tiktoken
 
-def chunk_text_by_tokens(text, max_tokens=500):
+def chunk_text_by_tokens(text, max_tokens=500, encoding='cl100k_base'):
     """
     Split text into token-safe chunks for TinyLlama.
     """
-    encoder = tiktoken.get_encoding("cl100k_base")
+    encoder = tiktoken.get_encoding(encoding)
     tokens = encoder.encode(text)
     chunks = []
 

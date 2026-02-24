@@ -21,8 +21,9 @@ try:
     console.print("[green]✓ Server is running\n[/green]")
 except requests.RequestException:
     console.print(
-        f"[red]✗ Cannot connect to server at {SERVER_URL}[/red]\n"
-        "[yellow]Make sure you have run: ollama serve[/yellow]"
+    f"[red]✗ Cannot connect to server at {SERVER_URL}[/red]\n"
+    "[yellow]Make sure Ollama is running. You can start with the below command in the terminal:[/yellow]\n"
+    "[cyan]./ollama.sh[/cyan]\n"
     )
     sys.exit(1)
 
@@ -44,7 +45,8 @@ for pdf_path in pdf_files:
     console.print(f"\n[bold cyan]===== {pdf_path.name} =====[/bold cyan]\n")
     
     try:
-        summary = summarize_pdf(str(pdf_path))
+        # summary = summarize_pdf(str(pdf_path))
+        summary,model = summarize_pdf(str(pdf_path), model='mistral')
         console.print(f"[bold cyan]Summary:[/bold cyan]\n{summary}\n")
         
         # Save summary to file
@@ -55,8 +57,10 @@ for pdf_path in pdf_files:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(f"PDF: {pdf_path.name}\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Model: {model}\n")
             f.write("=" * 80 + "\n\n")
-            f.write(summary)
+            formatted_summary = summary.replace('. ', '.\n')
+            f.write(formatted_summary)
         
         console.print(f"[green]✓ Summary saved to:[/green] {output_path}\n")
         console.print("=" * 80)

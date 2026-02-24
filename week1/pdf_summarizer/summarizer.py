@@ -49,7 +49,7 @@ def summarize_pdf(path, model=DEFAULT_MODEL, safety_factor=DEFAULT_SAFETY_FACTOR
     # Parse PDF
     console.print("[cyan]Parsing PDF...[/cyan]")
     pdf_text = pdf_parser_func(path)
-    chunks = chunk_text_by_tokens(pdf_text, max_tokens=max_tokens)
+    chunks = chunk_text_by_tokens(pdf_text, max_tokens=max_tokens, encoding=config["encoding"])
     console.print(f"[green]✓[/green] PDF parsed ({len(chunks)} chunks)\n")
 
     summaries = []
@@ -58,8 +58,14 @@ def summarize_pdf(path, model=DEFAULT_MODEL, safety_factor=DEFAULT_SAFETY_FACTOR
     console.print(f"[cyan]Summarizing chunks using {model}...[/cyan]")
     for chunk in chunks:
         messages = [
-            {"role": "system", "content": "You are an academically excellent summarizer."},
-            {"role": "user", "content": chunk}
+            {
+            "role": "system", 
+            "content": "You are evaluating a Data Engineer candidate. Extract only: work experience, technical skills, cloud platforms, and key achievements. Be factual and concise."
+            },
+            {
+            "role": "user", 
+            "content": f"Summarize the relevant data engineering information from this text:\n\n{chunk}"
+            }
         ]
 
         response = client.chat.completions.create(
@@ -78,11 +84,17 @@ def summarize_pdf(path, model=DEFAULT_MODEL, safety_factor=DEFAULT_SAFETY_FACTOR
     final_response = client.chat.completions.create(
         model=config["name"],
         messages=[
-            {"role": "system", "content": "Provide a concise, coherent final summary."},
-            {"role": "user", "content": combined_summary}
+            {
+            "role": "system", 
+            "content": "You are an AI Head of a data engineering team evaluating a candidate's resume for a Data Engineer position. Your job is to provide a crisp, professional evaluation based on the information provided. Assess their: 1) Relevant experience, 2) Technical skills, 3) Cloud platform expertise, 4) Data pipeline/ETL knowledge, 5) Overall fit for the role. Be objective and constructive."
+            },
+            {
+            "role": "user", 
+            "content": f"Based on this candidate's information, provide a concise hiring evaluation for a Data Engineer role:\n\n{combined_summary}"
+            }
         ]
     )
 
     console.print("[green]✓[/green] Summary complete\n")
     
-    return final_response.choices[0].message.content
+    return final_response.choices[0].message.content, model

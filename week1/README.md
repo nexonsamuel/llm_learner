@@ -1,49 +1,57 @@
-# Week 1: PDF Summarizer
+# Week 1: PDF Summarizer & Resume Evaluator
 
-A Python-based PDF summarization tool that uses LLMs (Large Language Models) to generate intelligent summaries of PDF documents. The tool supports multiple models including TinyLlama, GPT-4, and Claude.
+An intelligent document processing system that uses LLMs to summarize PDFs and evaluate resumes with hiring-focused insights.
 
 ## Overview
 
-This project demonstrates a multi-stage summarization pipeline:
-1. Extract text from PDF files using PyMuPDF
-2. Split text into token-safe chunks to respect model context windows
-3. Summarize each chunk individually using an LLM
-4. Combine chunk summaries and generate a final coherent summary
-5. Save the output to a timestamped file
+This project demonstrates a production-ready multi-stage pipeline:
+1. **Extract** - Parse text from PDF files using PyMuPDF
+2. **Chunk** - Split text into token-safe chunks respecting model context windows
+3. **Summarize** - Process each chunk with an LLM
+4. **Evaluate** - Synthesize into a hiring evaluation
+5. **Persist** - Save outputs with metadata (model used, timestamp)
+
+## Features
+
+- **Multiple Model Support** - Works with local (Mistral, Phi) and cloud models (GPT-4, Claude)
+- **Intelligent Chunking** - Token-based splitting prevents context overflow
+- **Dynamic Configuration** - All model settings in one place
+- **Hiring-Focused Evaluation** - Specialized prompts for resume assessment
+- **Environment Variables** - Secure API key management
+- **Progress Feedback** - Rich console output with status updates
+- **Error Handling** - Graceful failures with helpful messages
+- **Timestamped Output** - Track when and with which model summaries were generated
 
 ## Project Structure
 
 ```
 week1/
-├── requirements.txt              # Python dependencies
-├── README.md                     # This file
-├── data/                         # PDF files to summarize (create this folder)
-├── output/                       # Generated summaries (auto-created)
+├── README.md                          # This file
+├── requirements.txt                   # Python dependencies
+├── ollama.sh                          # Setup script for local models
+├── .env.example                       # API key template
+│
+├── data/                              # Input PDF files (create this folder)
+├── output/                            # Generated summaries (auto-created)
+│
 ├── examples/
-│   └── run_summary.py           # Main entry point script
+│   └── run_summary.py                # Main entry point script
+│
 ├── pdf_summarizer/
-│   ├── __init__.py              # Package initialization
-│   ├── pdf_parser.py            # PDF text extraction
-│   ├── chunker.py               # Token-based text chunking
-│   ├── summarizer.py            # Core summarization logic
-│   └── model_constants.py        # Model configurations
+│   ├── __init__.py                   # Package initialization
+│   ├── pdf_parser.py                 # PDF text extraction
+│   ├── chunker.py                    # Token-based text chunking
+│   ├── summarizer.py                 # Core pipeline orchestration
+│   └── model_constants.py            # Centralized model configs
+│
 └── tests/
-    └── test_summarizer.py        # Unit tests
+    ├── conftest.py                   # Pytest configuration
+    └── test_summarizer.py            # Unit tests
 ```
 
-## Features
+## Quick Start
 
-- **Multiple Model Support**: Works with TinyLlama, GPT-4, GPT-3.5, and Claude models
-- **Dynamic Token Chunking**: Automatically adjusts chunk size based on model context window
-- **Safety Factor**: Configurable safety margin (default 30%) to avoid context window overflow
-- **Environment Variables**: Secure API key management using `.env` file
-- **Progress Feedback**: Clear console output showing processing steps
-- **Output Persistence**: Saves summaries with timestamps for record-keeping
-- **Error Handling**: Graceful error handling with informative messages
-
-## Setup
-
-### 1. Create Virtual Environment
+### 1. Set Up Environment
 
 ```bash
 cd week1
@@ -57,54 +65,74 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
-
-Copy the example environment file and add your API keys:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and add your API keys:
-
-```env
-# For OpenAI models (GPT-4, GPT-3.5)
-OPENAI_API_KEY=sk-your-openai-key-here
-
-# For Anthropic models (Claude)
-ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
-
-# For local Ollama models (TinyLlama, Llama 2, Mistral)
-# No API key needed, just ensure ollama serve is running
-```
-
-### 4. Prepare Input Files
-
-Create a `data/` folder and add your PDF files:
+### 3. Prepare Input Files
 
 ```bash
 mkdir data
 # Add your PDF files to the data/ folder
 ```
 
-## Usage
+### 4. Start the Model Server
 
-### Basic Usage (Default Model: TinyLlama)
+For **local models** (recommended - free and fast):
+```bash
+./check_ollama_enhanced.sh mistral
+```
+
+This will:
+- Check if Ollama is installed
+- Pull the Mistral model (if not already downloaded)
+- Start the Ollama server
+
+For **cloud models**, create a `.env` file:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your API keys:
+```env
+OPENAI_API_KEY=sk-your-openai-key-here
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+```
+
+### 5. Run the Summarizer
 
 ```bash
 python examples/run_summary.py
 ```
 
-### Using Different Models
+The script will:
+- Find all PDFs in the `data/` folder
+- Summarize each one using the configured model
+- Save results to `output/` with metadata
 
-To use a different model, modify `run_summary.py`:
+## Supported Models
 
-```python
-# Change this line:
-summary = summarize_pdf(str(pdf_path))
+### Recommended (Local - Free)
 
-# To:
-summary = summarize_pdf(str(pdf_path), model="gpt-4")
+| Model | Context | Quality | Speed | Size |
+|-------|---------|---------|-------|------|
+| **Mistral** | 8,192 | ⭐⭐⭐⭐⭐ | Fast | 4.1GB |
+| Phi | 2,048 | ⭐⭐⭐ | Very Fast | 1.6GB |
+| Neural Chat | 4,096 | ⭐⭐⭐⭐ | Fast | 4.2GB |
+
+### Cloud Options (Paid)
+
+| Model | Context | Quality | Speed |
+|-------|---------|---------|-------|
+| GPT-4 | 8,192 | ⭐⭐⭐⭐⭐ | Medium |
+| GPT-4 Turbo | 128,000 | ⭐⭐⭐⭐⭐ | Medium |
+| Claude 3 Opus | 200,000 | ⭐⭐⭐⭐⭐ | Medium |
+| Claude 3 Sonnet | 200,000 | ⭐⭐⭐⭐ | Fast |
+
+**Default:** Mistral (excellent quality-to-resource ratio)
+
+## Usage Examples
+
+### Basic Usage (Uses Mistral by default)
+
+```bash
+python examples/run_summary.py
 ```
 
 ### Programmatic Usage
@@ -112,181 +140,292 @@ summary = summarize_pdf(str(pdf_path), model="gpt-4")
 ```python
 from pdf_summarizer import summarize_pdf
 
-# Summarize with default settings (TinyLlama)
-summary = summarize_pdf("path/to/document.pdf")
-
-# Summarize with GPT-4 and custom safety factor
-summary = summarize_pdf(
-    "path/to/document.pdf",
-    model="gpt-4",
-    safety_factor=0.40  # Use 40% of context window
-)
-
+# Basic usage
+summary, model = summarize_pdf("path/to/resume.pdf")
+print(f"Evaluated with: {model}")
 print(summary)
+
+# With specific model
+summary, model = summarize_pdf("path/to/resume.pdf", model="gpt-4")
+
+# With custom safety factor (use more context per chunk)
+summary, model = summarize_pdf(
+    "path/to/resume.pdf",
+    model="mistral",
+    safety_factor=0.50  # Use 50% of context window instead of 30%
+)
 ```
 
-## Supported Models
+## Configuration
 
-| Model | Provider | Context Window | Use Case |
-|-------|----------|---|---|
-| `tinyllama` | Ollama (Local) | 2,048 | Fast, free, local processing |
-| `llama-2` | Ollama (Local) | 4,096 | Better quality, still local |
-| `mistral` | Ollama (Local) | 8,192 | High-quality local processing |
-| `gpt-3.5-turbo` | OpenAI | 4,096 | Fast, affordable cloud option |
-| `gpt-4` | OpenAI | 8,192 | High-quality summaries |
-| `gpt-4-turbo` | OpenAI | 128,000 | Very long documents |
-| `claude-3-sonnet` | Anthropic | 200,000 | Excellent quality |
-| `claude-3-opus` | Anthropic | 200,000 | Best quality |
+### Model Constants (`pdf_summarizer/model_constants.py`)
 
-## Key Concepts
+All model settings are centralized:
 
-### Token-Based Chunking
+```python
+MODEL_CONFIGS = {
+    "mistral": {
+        "name": "mistral",                      # Model identifier
+        "base_url": "http://localhost:11434/v1", # API endpoint
+        "api_key": "ollama",                    # API key (or env var)
+        "context_window": 8192,                 # Token limit
+        "provider": "ollama",                   # Provider type
+        "encoding": "cl100k_base",              # Tiktoken encoding
+    },
+    # ... more models
+}
 
-The tool uses `tiktoken` to split PDFs into token-safe chunks. This ensures:
-- Each chunk respects the model's context window limit
-- Accurate token counting prevents errors
-- Efficient processing of large documents
-
-**Max Tokens Calculation:**
-```
-max_tokens = int(context_window * safety_factor)
+DEFAULT_MODEL = "mistral"          # Default model to use
+DEFAULT_SAFETY_FACTOR = 0.30       # Safety margin (30% of context window)
 ```
 
-Example for TinyLlama (2,048 context window):
+### Modifying Prompts
+
+The evaluation prompts are in `summarizer.py`. Current prompts:
+
+**Chunk Summarization:**
+```python
+"You are evaluating a Data Engineer candidate. Extract only: 
+work experience, technical skills, cloud platforms, and key achievements. 
+Be factual and concise."
 ```
-max_tokens = int(2048 * 0.30) = 614 tokens per chunk
+
+**Final Evaluation:**
+```python
+"You are an AI Head of a data engineering team evaluating a candidate's 
+resume for a Data Engineer position. Your job is to provide a crisp, 
+professional evaluation..."
 ```
 
-### Multi-Stage Summarization
+To customize for different roles, modify these prompts in `summarizer.py`.
 
-1. **Chunk Summarization**: Each chunk is summarized independently
-2. **Summary Combination**: All chunk summaries are concatenated
-3. **Final Summary**: A final pass creates a coherent overall summary
+## Output Format
 
-This approach handles very long documents by breaking them into manageable pieces.
-
-### API Key Security
-
-API keys are stored in `.env` file which:
-- Is gitignored (never committed to repository)
-- Is loaded at runtime via `python-dotenv`
-- Keeps sensitive data secure
-
-## Output
-
-Summaries are saved to the `output/` folder with timestamped filenames:
+Summaries are saved to `output/` with timestamps:
 
 ```
 output/
-├── Nexon_Samuel_summary_20250223_143022.txt
-├── research_paper_summary_20250223_144156.txt
-└── article_summary_20250223_150305.txt
+├── Nexon_Samuel_summary_20250224_160339.txt
+├── resume_summary_20250224_161505.txt
+└── ...
 ```
 
 Each file contains:
 ```
-PDF: document_name.pdf
-Generated: 2025-02-23 14:30:22
+PDF: Nexon_Samuel.pdf
+Generated: 2026-02-24 16:03:39
+Model: mistral
 ================================================================================
 
-[Summary text here...]
+[Evaluation text here, with sentences on separate lines...]
 ```
 
-## Requirements
+## Understanding Token Chunking
 
-- Python 3.8+
-- Dependencies listed in `requirements.txt`:
-  - `PyMuPDF==1.23.1` - PDF text extraction
-  - `openai==1.33.0` - LLM API client
-  - `tiktoken==0.4.0` - Token counting
-  - `rich==13.6.0` - Beautiful console output
-  - `python-dotenv==1.0.0` - Environment variable management
+### Why Chunking?
 
-## Local Model Setup (Ollama)
+LLMs have a **context window** - maximum tokens they can process:
+- Mistral: 8,192 tokens
+- GPT-4: 8,192 tokens
+- Claude 3 Opus: 200,000 tokens
 
-To use local models like TinyLlama without API keys:
+A large PDF might be 50,000+ tokens, exceeding the limit.
 
-1. Install Ollama: https://ollama.ai
-2. Start Ollama server:
-   ```bash
-   ollama serve
-   ```
-3. Pull a model:
-   ```bash
-   ollama pull tinyllama
-   ```
-4. Run the summarizer (it will automatically connect to `http://localhost:11434/v1`)
+### How It Works
+
+```
+1. Read PDF (50,000 tokens)
+   ↓
+2. Split into chunks (safety_factor * context_window)
+   - Mistral: 8,192 * 0.30 = 2,456 tokens per chunk
+   ↓
+3. Summarize each chunk independently
+   ↓
+4. Combine summaries into final output
+```
+
+### Tuning Safety Factor
+
+```python
+# Conservative (safer, smaller chunks)
+safety_factor = 0.20  # Smaller chunks, safer
+
+# Balanced (default)
+safety_factor = 0.30  # Good middle ground
+
+# Aggressive (use more context)
+safety_factor = 0.50  # Larger chunks, may risk overflow
+```
+
+Higher safety factor = larger chunks = better context but higher risk.
+
+## Key Architectural Decisions
+
+### 1. Token-Based vs Character-Based Chunking
+**Decision:** Token-based (using tiktoken)
+**Why:** Different models have different tokenization rules. Character counts are unreliable.
+
+### 2. Model Configuration Centralization
+**Decision:** All model settings in `model_constants.py`
+**Why:** Easy to add new models, change settings without code changes.
+
+### 3. Encoding Parameter Passed to Chunker
+**Decision:** `chunk_text_by_tokens()` accepts encoding parameter from config
+**Why:** Different providers use different encodings (OpenAI vs Anthropic).
+
+### 4. Hiring-Focused Prompts
+**Decision:** Specialized system prompts for resume evaluation
+**Why:** Generic prompts lead to hallucinations; specific context improves output quality.
 
 ## Testing
 
 Run unit tests:
 
 ```bash
-pytest tests/test_summarizer.py
+pytest tests/test_summarizer.py -v
 ```
+
+Tests cover:
+- Text chunking functionality
+- Model validation
+- PDF parsing
 
 ## Troubleshooting
 
-### "Cannot connect to TinyLlama server"
-- Ensure Ollama is running: `ollama serve`
-- Check the server URL is correct: `http://localhost:11434/v1`
+### "Cannot connect to server at http://localhost:11434"
+```bash
+# Make sure Ollama is running
+./check_ollama_enhanced.sh mistral
+```
 
 ### "No PDF files found"
-- Create a `data/` folder in the project root
-- Add PDF files to the `data/` folder
+```bash
+mkdir data
+# Add PDF files to the data/ folder
+```
 
-### API Key errors
-- Verify your API key is correct in `.env`
+### "Model not found" error
+```bash
+# Pull the model first
+ollama pull mistral
+
+# Or use the setup script
+./check_ollama_enhanced.sh mistral
+```
+
+### API Key errors (for cloud models)
+- Verify `.env` file exists in `week1/`
+- Check API key is correct
 - Ensure you have sufficient API credits
-- Check that the model name matches your plan
 
 ### Token limit exceeded
-- Reduce the `safety_factor` (less safe but allows larger chunks)
-- Use a model with a larger context window
-- Split PDFs into smaller files manually
+```python
+# Option 1: Reduce safety factor
+safety_factor=0.20  # Smaller chunks
 
-## Architecture
+# Option 2: Use model with larger context
+model="gpt-4-turbo"  # 128,000 tokens
 
-### `pdf_parser.py`
-Handles PDF text extraction using PyMuPDF (fitz). Iterates through all pages and concatenates the text.
+# Option 3: Split PDF manually into smaller files
+```
 
-### `chunker.py`
-Splits text into chunks based on token count rather than character count. Uses `tiktoken` for accurate token counting.
+## Performance Metrics
 
-### `summarizer.py`
-Orchestrates the entire pipeline:
-- Loads model configuration
-- Initializes LLM client
-- Processes chunks
-- Generates final summary
+**Example: Summarizing a 2-page resume (500 tokens)**
 
-### `model_constants.py`
-Centralized configuration for all supported models:
-- Model names and API endpoints
-- Context window sizes
-- API key references
+| Model | Time | Quality | Cost |
+|-------|------|---------|------|
+| Mistral | 5-10s | Excellent | Free |
+| Phi | 3-5s | Good | Free |
+| GPT-3.5 | 2-3s | Excellent | $0.01 |
+| GPT-4 | 3-5s | Best | $0.10 |
 
 ## Best Practices
 
-1. **Start with local models** (TinyLlama) for testing
-2. **Use safety_factor=0.30** as a conservative default
-3. **Monitor API usage** when using cloud models (GPT, Claude)
-4. **Batch process** multiple PDFs to save on API costs
-5. **Test with small PDFs** first to ensure setup is correct
+1. **Start with local models** (Mistral/Phi) for testing
+2. **Use default safety_factor (0.30)** unless you have a reason to change it
+3. **Test with small PDFs first** before processing large batches
+4. **Monitor output quality** - adjust prompts if results are poor
+5. **Batch process** multiple documents to amortize setup overhead
+6. **Keep API keys secure** - never commit `.env` to git
+
+## Data Engineering Concepts Demonstrated
+
+1. **ETL Pipeline** - Extract (PDF) → Transform (chunk) → Load (summarize)
+2. **Handling Large Data** - Breaking data into manageable chunks
+3. **Provider Abstraction** - Supporting multiple LLM backends
+4. **Configuration Management** - Centralized settings
+5. **Error Handling** - Graceful failures with helpful messages
+6. **Pipeline Orchestration** - Coordinating multiple API calls
+7. **Metadata Tracking** - Recording which model/parameters were used
 
 ## Future Enhancements
 
-- Support for other document formats (DOCX, PPTX)
-- Configurable summary length (brief, medium, detailed)
-- Language translation support
-- Custom summarization prompts
-- Batch processing with progress tracking
-- Web interface for easier access
+- [ ] Support DOCX, PPTX documents
+- [ ] Batch processing with progress bar
+- [ ] Custom prompts per role (Data Scientist, ML Engineer, etc.)
+- [ ] Web UI for drag-and-drop resumesor upload
+- [ ] Vector embeddings for semantic similarity
+- [ ] Database storage for summaries
+- [ ] Comparison mode (evaluate multiple candidates)
+- [ ] Export to PDF/CSV formats
+
+## Requirements
+
+- Python 3.8+
+- 4GB RAM minimum
+- For local models: Ollama installed (https://ollama.ai)
+- For cloud models: API keys from OpenAI/Anthropic
+
+## Dependencies
+
+```
+PyMuPDF==1.23.1        # PDF text extraction
+openai==1.33.0         # LLM API client
+tiktoken==0.4.0        # Token counting
+rich==13.6.0           # Beautiful console output
+python-dotenv==1.0.0   # Environment variables
+pytest                 # Testing (dev only)
+```
+
+## Common Use Cases
+
+### 1. Resume Screening
+```python
+summary, model = summarize_pdf("resume.pdf", model="mistral")
+# Output: Hiring evaluation with strengths/gaps
+```
+
+### 2. Document Analysis
+```python
+summary, model = summarize_pdf("research_paper.pdf", model="gpt-4")
+# Output: Key findings and insights
+```
+
+### 3. Content Extraction
+```python
+summary, model = summarize_pdf("contract.pdf", model="claude-3-opus")
+# Output: Contract terms and obligations
+```
+
+## Learning Resources
+
+- **Token Counting:** Understanding how LLMs count text
+  - Read: https://platform.openai.com/tokenizer
+  - Practice: Use `tiktoken` library
+
+- **Context Windows:** Why models have limits
+  - Read: Model documentation on official sites
+  - Experiment: Try different safety factors
+
+- **Prompt Engineering:** How to get better outputs
+  - Test: Modify system prompts in `summarizer.py`
+  - Iterate: See how different instructions change results
 
 ## License
 
-This project is part of a LLM learning experimentation.
+Educational project for teaching data engineering concepts.
 
 ## Author
 
-Created for data engineering education and practice.
+Created for comprehensive data engineering education focusing on real-world LLM applications.
