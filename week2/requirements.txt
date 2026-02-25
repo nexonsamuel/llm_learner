@@ -1,0 +1,6 @@
+# Core dependencies
+gradio
+openai
+tiktoken
+rich
+python-dotenv
