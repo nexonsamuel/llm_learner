@@ -21,6 +21,7 @@ This project demonstrates a production-ready multi-stage pipeline:
 - **Progress Feedback** - Rich console output with status updates
 - **Error Handling** - Graceful failures with helpful messages
 - **Timestamped Output** - Track when and with which model summaries were generated
+- **Jupyter Notebook Interface** - Interactive Day 1 example notebook
 
 ## Project Structure
 
@@ -31,10 +32,11 @@ week1/
 ├── ollama.sh                          # Setup script for local models
 ├── .env.example                       # API key template
 │
-├── data/                              # Input PDF files (create this folder)
-├── output/                            # Generated summaries (auto-created)
+├── data/                              # Input PDF files
+├── output/                            # Generated summaries
 │
 ├── examples/
+│   ├── day1.ipynb                    # Interactive Jupyter notebook (Day 1)
 │   └── run_summary.py                # Main entry point script
 │
 ├── pdf_summarizer/
@@ -97,6 +99,27 @@ ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
 
 ### 5. Run the Summarizer
 
+#### Option A: Interactive Jupyter Notebook (Recommended for Learning)
+
+```bash
+cd examples
+jupyter notebook day1.ipynb
+```
+
+Then:
+- Run Section 1: Imports (verify everything loads)
+- Run Sections 2-4: Configuration and functions
+- Run Section 5: Execute pipeline on your PDF
+- Run Sections 6-7: View and save results
+- Run Section 8: Advanced options (batch processing)
+
+**Key Points:**
+- Make sure your PDF is in `week1/data/`
+- Results save to `week1/output/`
+- Notebook uses relative paths (`../data/`, `../output/`)
+
+#### Option B: Python Script (For Automation)
+
 ```bash
 python examples/run_summary.py
 ```
@@ -105,6 +128,79 @@ The script will:
 - Find all PDFs in the `data/` folder
 - Summarize each one using the configured model
 - Save results to `output/` with metadata
+
+## Day 1 Jupyter Notebook Guide
+
+### Running the Notebook
+
+```bash
+cd week1/examples
+jupyter notebook day1.ipynb
+```
+
+### What Each Section Does
+
+**Section 1: Setup & Dependencies**
+- Imports all required libraries
+- Sets up path for module imports: `from pdf_summarizer.pdf_parser import pdf_parser_func`
+- Loads model configurations
+
+**Section 2: Configuration & Constants**
+- LLM_CONFIG - model and API settings
+- CHUNKING_CONFIG - token limits
+- PROMPTS - system prompts for summarization
+- OUTPUT_DIR - where to save results
+
+**Section 3: Utility Functions**
+- `chunk_text_by_tokens()` - splits text by tokens
+- `initialize_llm_client()` - creates LLM connection
+- `call_llm()` - sends messages to LLM
+
+**Section 4: Pipeline Functions**
+- `summarize_pdf()` - main pipeline orchestration
+- `save_results()` - saves with metadata and timestamps
+
+**Section 5: Execute Pipeline**
+- Runs complete pipeline on your PDF
+- Shows step-by-step progress
+- Displays final summary
+
+**Section 6: Save & Display**
+- Saves results to file
+- Shows execution statistics
+
+**Section 7: Format Output**
+- Displays summary in formatted paragraphs
+
+**Section 8: Advanced Options**
+- `process_multiple_pdfs()` - batch process folder
+- Placeholder for custom prompts
+
+### Customization
+
+**Change Model:**
+```python
+# In Section 2, modify:
+LLM_CONFIG = MODEL_CONFIGS['mistral']  # or 'gpt-4', 'claude-3-sonnet'
+```
+
+**Adjust Chunk Size:**
+```python
+# In Section 2, modify:
+'max_tokens': 1000  # Instead of 500
+```
+
+**Custom Prompts:**
+```python
+# In Section 2, modify PROMPTS dictionary:
+PROMPTS['chunk_summarizer'] = "Your custom instructions..."
+```
+
+**Process Multiple PDFs:**
+```python
+# In Section 8, run:
+all_results = process_multiple_pdfs('../data/')
+```
 
 ## Supported Models
 
@@ -115,6 +211,7 @@ The script will:
 | **Mistral** | 8,192 | ⭐⭐⭐⭐⭐ | Fast | 4.1GB |
 | Phi | 2,048 | ⭐⭐⭐ | Very Fast | 1.6GB |
 | Neural Chat | 4,096 | ⭐⭐⭐⭐ | Fast | 4.2GB |
+| TinyLLama | 2,048 | ⭐⭐ | Very Fast | 1.1GB |
 
 ### Cloud Options (Paid)
 
@@ -129,7 +226,15 @@ The script will:
 
 ## Usage Examples
 
-### Basic Usage (Uses Mistral by default)
+### Using Jupyter Notebook (Interactive)
+
+```bash
+cd examples
+jupyter notebook day1.ipynb
+# Then run each section sequentially
+```
+
+### Using Python Script (Batch)
 
 ```bash
 python examples/run_summary.py
@@ -181,7 +286,7 @@ DEFAULT_SAFETY_FACTOR = 0.30       # Safety margin (30% of context window)
 
 ### Modifying Prompts
 
-The evaluation prompts are in `summarizer.py`. Current prompts:
+In the Jupyter notebook (Section 2) or in `summarizer.py`:
 
 **Chunk Summarization:**
 ```python
@@ -197,7 +302,7 @@ resume for a Data Engineer position. Your job is to provide a crisp,
 professional evaluation..."
 ```
 
-To customize for different roles, modify these prompts in `summarizer.py`.
+To customize for different roles, modify these prompts in the notebook or `summarizer.py`.
 
 ## Output Format
 
@@ -205,19 +310,37 @@ Summaries are saved to `output/` with timestamps:
 
 ```
 output/
-├── Nexon_Samuel_summary_20250224_160339.txt
-├── resume_summary_20250224_161505.txt
+├── nexon_samuel_summary.txt
+├── resume_summary_20250225_160339.txt
 └── ...
 ```
 
 Each file contains:
 ```
-PDF: Nexon_Samuel.pdf
-Generated: 2026-02-24 16:03:39
-Model: mistral
+================================================================================
+PDF SUMMARIZATION RESULT
 ================================================================================
 
-[Evaluation text here, with sentences on separate lines...]
+Generated: 2026-02-25T16:03:39.123456
+Model: mistral
+PDF: ../data/Nexon_Samuel.pdf
+Chunks Processed: 3
+
+================================================================================
+FINAL SUMMARY
+================================================================================
+
+[Evaluation text here...]
+
+================================================================================
+CHUNK SUMMARIES
+================================================================================
+
+[CHUNK 1]
+[Summary of chunk 1...]
+
+[CHUNK 2]
+[Summary of chunk 2...]
 ```
 
 ## Understanding Token Chunking
@@ -225,6 +348,7 @@ Model: mistral
 ### Why Chunking?
 
 LLMs have a **context window** - maximum tokens they can process:
+- TinyLLama: 2,048 tokens
 - Mistral: 8,192 tokens
 - GPT-4: 8,192 tokens
 - Claude 3 Opus: 200,000 tokens
@@ -277,155 +401,102 @@ Higher safety factor = larger chunks = better context but higher risk.
 **Decision:** Specialized system prompts for resume evaluation
 **Why:** Generic prompts lead to hallucinations; specific context improves output quality.
 
-## Testing
-
-Run unit tests:
-
-```bash
-pytest tests/test_summarizer.py -v
-```
-
-Tests cover:
-- Text chunking functionality
-- Model validation
-- PDF parsing
+### 5. Multi-Stage Processing
+**Decision:** Summarize chunks independently, then synthesize final output
+**Why:** Preserves context better than single-pass summarization for large documents.
 
 ## Troubleshooting
 
-### "Cannot connect to server at http://localhost:11434"
+### Ollama Connection Issues
+```
+Error: Connection refused
+```
+**Solution:** Make sure Ollama is running:
 ```bash
-# Make sure Ollama is running
-./ollama.sh mistral
+ollama serve
 ```
 
-### "No PDF files found"
-```bash
-mkdir data
-# Add PDF files to the data/ folder
+### Model Not Found
 ```
-
-### "Model not found" error
+Error: Model 'mistral' not found
+```
+**Solution:** Pull the model first:
 ```bash
-# Pull the model first
 ollama pull mistral
-
-# Or use the setup script
-./ollama.sh mistral
 ```
 
-### API Key errors (for cloud models)
-- Verify `.env` file exists in `week1/`
-- Check API key is correct
-- Ensure you have sufficient API credits
-
-### Token limit exceeded
+### Python Module Not Found
+```
+ModuleNotFoundError: No module named 'pdf_summarizer'
+```
+**Solution (Jupyter):** Make sure Section 1 includes:
 ```python
-# Option 1: Reduce safety factor
-safety_factor=0.20  # Smaller chunks
+import sys
+from pathlib import Path
 
-# Option 2: Use model with larger context
-model="gpt-4-turbo"  # 128,000 tokens
-
-# Option 3: Split PDF manually into smaller files
+current_dir = Path.cwd()
+week1_path = str(current_dir.parent)  # Go up to week1/
+sys.path.insert(0, week1_path)
 ```
 
-## Performance Metrics
-
-**Example: Summarizing a 2-page resume (500 tokens)**
-
-| Model | Time | Quality | Cost |
-|-------|------|---------|------|
-| Mistral | 5-10s | Excellent | Free |
-| Phi | 3-5s | Good | Free |
-| GPT-3.5 | 2-3s | Excellent | $0.01 |
-| GPT-4 | 3-5s | Best | $0.10 |
-
-## Best Practices
-
-1. **Start with local models** (Mistral/Phi) for testing
-2. **Use default safety_factor (0.30)** unless you have a reason to change it
-3. **Test with small PDFs first** before processing large batches
-4. **Monitor output quality** - adjust prompts if results are poor
-5. **Batch process** multiple documents to amortize setup overhead
-6. **Keep API keys secure** - never commit `.env` to git
-
-## Data Engineering Concepts Demonstrated
-
-1. **ETL Pipeline** - Extract (PDF) → Transform (chunk) → Load (summarize)
-2. **Handling Large Data** - Breaking data into manageable chunks
-3. **Provider Abstraction** - Supporting multiple LLM backends
-4. **Configuration Management** - Centralized settings
-5. **Error Handling** - Graceful failures with helpful messages
-6. **Pipeline Orchestration** - Coordinating multiple API calls
-7. **Metadata Tracking** - Recording which model/parameters were used
-
-## Future Enhancements
-
-- [ ] Support DOCX, PPTX documents
-- [ ] Batch processing with progress bar
-- [ ] Custom prompts per role (Data Scientist, ML Engineer, etc.)
-- [ ] Web UI for drag-and-drop resumesor upload
-- [ ] Vector embeddings for semantic similarity
-- [ ] Database storage for summaries
-- [ ] Comparison mode (evaluate multiple candidates)
-- [ ] Export to PDF/CSV formats
-
-## Requirements
-
-- Python 3.8+
-- 4GB RAM minimum
-- For local models: Ollama installed (https://ollama.ai)
-- For cloud models: API keys from OpenAI/Anthropic
-
-## Dependencies
-
+### PDF File Not Found
 ```
-PyMuPDF==1.23.1        # PDF text extraction
-openai==1.33.0         # LLM API client
-tiktoken==0.4.0        # Token counting
-rich==13.6.0           # Beautiful console output
-python-dotenv==1.0.0   # Environment variables
-pytest                 # Testing (dev only)
+FileNotFoundError: [Errno 2] No such file or directory: '../data/file.pdf'
+```
+**Solution:** 
+- Make sure PDF is in `week1/data/`
+- Check file name matches exactly
+- Use relative paths from `examples/` directory
+
+## Development
+
+### Running Tests
+
+```bash
+pytest tests/
 ```
 
-## Common Use Cases
+### Adding a New Model
 
-### 1. Resume Screening
+1. Add configuration to `pdf_summarizer/model_constants.py`:
 ```python
-summary, model = summarize_pdf("resume.pdf", model="mistral")
-# Output: Hiring evaluation with strengths/gaps
+MODEL_CONFIGS['new-model'] = {
+    'name': 'new-model',
+    'base_url': '...',
+    'api_key': '...',
+    'context_window': 8192,
+    'provider': 'provider_name',
+    'encoding': 'cl100k_base'
+}
 ```
 
-### 2. Document Analysis
+2. Update in Jupyter notebook or use in code:
 ```python
-summary, model = summarize_pdf("research_paper.pdf", model="gpt-4")
-# Output: Key findings and insights
+summary, model = summarize_pdf('file.pdf', model='new-model')
 ```
 
-### 3. Content Extraction
-```python
-summary, model = summarize_pdf("contract.pdf", model="claude-3-opus")
-# Output: Contract terms and obligations
-```
+### Modifying the Pipeline
 
-## Learning Resources
+Each component is modular:
+- `pdf_parser.py` - Change PDF extraction logic
+- `chunker.py` - Change chunking algorithm
+- `summarizer.py` - Change summarization logic
+- `model_constants.py` - Change model configs
 
-- **Token Counting:** Understanding how LLMs count text
-  - Read: https://platform.openai.com/tokenizer
-  - Practice: Use `tiktoken` library
+## Performance Tips
 
-- **Context Windows:** Why models have limits
-  - Read: Model documentation on official sites
-  - Experiment: Try different safety factors
+1. **Use Mistral** - Better quality than TinyLLama, faster than GPT-4
+2. **Adjust chunk size** - Larger chunks = better context but more processing
+3. **Batch processing** - Process multiple PDFs in one notebook run
+4. **Use local models** - Free and fast (Mistral > Phi > TinyLLama)
 
-- **Prompt Engineering:** How to get better outputs
-  - Test: Modify system prompts in `summarizer.py`
-  - Iterate: See how different instructions change results
+## References
+
+- [PyMuPDF Documentation](https://pymupdf.readthedocs.io/)
+- [OpenAI API Documentation](https://platform.openai.com/docs/)
+- [Tiktoken GitHub](https://github.com/openai/tiktoken)
+- [Ollama Documentation](https://ollama.ai/)
 
 ## License
 
-Educational project for teaching data engineering concepts.
-
-## Author
-
-Created for comprehensive data engineering education focusing on real-world LLM applications.
+This project is provided as-is for educational purposes.
