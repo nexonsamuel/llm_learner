@@ -1,6 +1,5 @@
-# Core dependencies
-gradio
-openai
-tiktoken
-rich
-python-dotenv
+# Week 2: Talking Models - Requirements
+
+openai>=1.0.0
+gradio>=4.0.0
+python-dotenv>=0.19.0
