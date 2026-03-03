@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 DB_PATH = 'db/medicine_info.db'
-CSV_PATH = 'dataset/drug_dataset.csv'
+CSV_PATH = 'dataset/medicine_info_dataset.csv'
 
 
 def initialize_db():
